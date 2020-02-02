@@ -2,15 +2,16 @@
 {
 	Properties
 	{
-		_PosTex("Position Texture", 2D) = "white" {}
 		_Dist("Distance", float) = 5.0
+		_PosTex("Position Texture", 2D) = "white" {}
 		_MainTex("Texture", 2D) = "white" {}
-		_SecondayTex("Secondary texture", 2D) = "white"{}
+		_SecondaryTex("Secondary texture", 2D) = "white"{}
 		_NPoints("NPoints", int) = 1
+		_Cutoff("Alpha cutoff", Range(0,1)) = 0.5
 	}
 		SubShader
 	{
-		Tags { "RenderType" = "Opaque" }
+		Tags { "Queue" = "AlphaTest"  "RenderType" = "TransparentCutout" }
 
 		Pass
 		{
@@ -35,28 +36,38 @@
 				o.uv = v.texcoord;
 				return o;
 			}
-
-			float4 _PlayerPos;
 			sampler2D _MainTex;
-			sampler2D _SecondayTex;
+			sampler2D _SecondaryTex;
 			sampler2D _PosTex;
 			float _Dist;
 			float _NPoints;
+			float _Cutoff;
 
 			fixed4 frag(v2f i) : SV_Target
 			{
 
 				float4 myPixelColor;
-			[loop]
+				fixed4 col = tex2D(_SecondaryTex, i.uv);
+				clip(col.a - _Cutoff);
+
+				if (_NPoints <= 0)
+					return col;
+
+				[loop]
 				for (int x = 0; x < _NPoints; x++)
 				{
-					float2 pixelPos = float2(x, 1);
-					myPixelColor = tex2D(_PosTex, pixelPos / float2(_NPoints,1.0f));
-
-					if (distance(myPixelColor.xyz, i.worldPos.xyz) > _Dist)
-						return tex2D(_MainTex, i.uv) * myPixelColor;
+					float2 pixelPos = float2(x, 1.0f);
+					
+					myPixelColor = tex2D(_PosTex, float2(x/_NPoints, 1.0f) );
+					if(distance(myPixelColor * 255, i.worldPos.xyz) < _Dist)
+					{
+						col = tex2D(_MainTex, i.uv);
+						return col;
+					}
 				}
-				return tex2D(_SecondayTex, i.uv);
+
+				clip(col.a - _Cutoff);
+				return col;
 			}
 
 			ENDCG

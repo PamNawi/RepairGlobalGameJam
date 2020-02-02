@@ -6,8 +6,8 @@ public class ApplyPlayerPos : MonoBehaviour
 {
     Material Mat;
     GameObject Player;
-    GameObject[] Points;
-    public int Radius = 10;
+    public  GameObject[] Points;
+    public float Radius = 10;
 
     void Start()
     {
@@ -19,6 +19,7 @@ public class ApplyPlayerPos : MonoBehaviour
 
     void Update()
     {
+        Points = GameObject.FindGameObjectsWithTag("ColorPaint");
         Texture2D texture = new Texture2D(Points.Length, 1);
         Color c = new Color();
         for (int x = 0; x < texture.width; x++)
@@ -29,7 +30,10 @@ public class ApplyPlayerPos : MonoBehaviour
             c.a = 1.0f;
             texture.SetPixel(x, 1, c);
         }
-        Mat.SetTexture("_PosTex", texture);
         texture.Apply();
+        Mat.SetTexture("_PosTex", texture);
+        Mat.SetInt("_NPoints", Points.Length);
+        Mat.SetFloat("_Dist", Radius);
+        
     }
 }
